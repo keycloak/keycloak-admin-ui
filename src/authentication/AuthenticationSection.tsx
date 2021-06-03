@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useRouteMatch } from "react-router-dom";
+import { Link, useHistory, useRouteMatch } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import {
   AlertVariant,
@@ -10,6 +10,7 @@ import {
   Popover,
   Tab,
   TabTitleText,
+  ToolbarItem,
 } from "@patternfly/react-core";
 import { CheckCircleIcon } from "@patternfly/react-icons";
 
@@ -50,6 +51,7 @@ export const AuthenticationSection = () => {
   const refresh = () => setKey(new Date().getTime());
   const { addAlert } = useAlerts();
   const { url } = useRouteMatch();
+  const history = useHistory();
 
   const [selectedFlow, setSelectedFlow] = useState<AuthenticationType>();
   const [open, setOpen] = useState(false);
@@ -198,6 +200,17 @@ export const AuthenticationSection = () => {
               loader={loader}
               ariaLabelKey="authentication:title"
               searchPlaceholderKey="authentication:searchForEvent"
+              toolbarItem={
+                <ToolbarItem>
+                  <Button
+                    onClick={() =>
+                      history.push(`/${realm}/authentication/create`)
+                    }
+                  >
+                    {t("createFlow")}
+                  </Button>
+                </ToolbarItem>
+              }
               actionResolver={({ data }) => {
                 const defaultActions = [
                   {
