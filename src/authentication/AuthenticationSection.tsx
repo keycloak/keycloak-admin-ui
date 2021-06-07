@@ -28,7 +28,7 @@ import { DuplicateFlowModal } from "./DuplicateFlowModal";
 
 import "./authentication-section.css";
 
-type UsedBy = "client" | "default" | "idp";
+type UsedBy = "specificClients" | "default" | "specificProviders";
 
 type AuthenticationType = AuthenticationFlowRepresentation & {
   usedBy: { type?: UsedBy; values: string[] };
@@ -76,7 +76,7 @@ export const AuthenticationSection = () => {
             client.authenticationFlowBindingOverrides["browser"] === flow.id)
       );
       if (client) {
-        flow.usedBy.type = "client";
+        flow.usedBy.type = "specificClients";
         flow.usedBy.values.push(client.clientId!);
       }
 
@@ -86,7 +86,7 @@ export const AuthenticationSection = () => {
           idp.postBrokerLoginFlowAlias === flow.alias
       );
       if (idp) {
-        flow.usedBy.type = "idp";
+        flow.usedBy.type = "specificProviders";
         flow.usedBy.values.push(idp.alias!);
       }
 
@@ -123,13 +123,16 @@ export const AuthenticationSection = () => {
 
   const UsedBy = ({ id, usedBy: { type, values } }: AuthenticationType) => (
     <>
-      {(type === "idp" || type === "client") && (
+      {(type === "specificProviders" || type === "specificClients") && (
         <Popover
           key={id}
-          aria-label="Basic popover"
+          aria-label={t("usedBy")}
           bodyContent={
             <div key={`usedBy-${id}-${values}`}>
-              {t("appliedBy" + (type === "client" ? "Clients" : "Providers"))}{" "}
+              {t(
+                "appliedBy" +
+                  (type === "specificClients" ? "Clients" : "Providers")
+              )}{" "}
               {values.map((used, index) => (
                 <>
                   <strong>{used}</strong>
@@ -144,7 +147,7 @@ export const AuthenticationSection = () => {
               className="keycloak_authentication-section__usedby"
               key={`icon-${id}`}
             />{" "}
-            {t("specific" + (type === "client" ? "Clients" : "Providers"))}
+            {t(type)}
           </Button>
         </Popover>
       )}
@@ -165,9 +168,17 @@ export const AuthenticationSection = () => {
     </>
   );
 
-  const AliasRenderer = ({ id, alias, builtIn }: AuthenticationType) => (
+  const AliasRenderer = ({
+    id,
+    alias,
+    usedBy,
+    builtIn,
+  }: AuthenticationType) => (
     <>
-      <Link to={`${url}/${id}`} key={`link-{id}`}>
+      <Link
+        to={`${url}/${id}/${usedBy.type}${builtIn ? "/buildIn" : ""}`}
+        key={`link-{id}`}
+      >
         {toUpperCase(alias!)}
       </Link>{" "}
       {builtIn && <Label key={`label-${id}`}>{t("buildIn")}</Label>}

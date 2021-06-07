@@ -244,7 +244,7 @@ export const routes: RouteDef[] = [
     access: "manage-authorization",
   },
   {
-    path: "/:realm/authentication/:id",
+    path: "/:realm/authentication/:id/:usedBy?/:buildIn?",
     component: FlowDetails,
     breadcrumb: t("authentication:flowDetails"),
     access: "manage-authorization",

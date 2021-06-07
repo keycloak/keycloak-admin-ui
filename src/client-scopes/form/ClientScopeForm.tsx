@@ -211,7 +211,7 @@ export const ClientScopeForm = () => {
               ]
             : undefined
         }
-        badge={clientScope ? clientScope.protocol : undefined}
+        badges={[{ text: clientScope ? clientScope.protocol : undefined }]}
         divider={!id}
       />
 
