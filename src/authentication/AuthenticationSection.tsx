@@ -176,7 +176,9 @@ export const AuthenticationSection = () => {
   }: AuthenticationType) => (
     <>
       <Link
-        to={`${url}/${id}/${usedBy.type}${builtIn ? "/buildIn" : ""}`}
+        to={`${url}/${id}/${usedBy.type || "notInUse"}${
+          builtIn ? "/buildIn" : ""
+        }`}
         key={`link-{id}`}
       >
         {toUpperCase(alias!)}
