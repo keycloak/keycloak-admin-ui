@@ -1,17 +1,7 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  DataList,
-  DataListCell,
-  DataListContent,
-  DataListItem,
-  DataListItemCells,
-  DataListItemRow,
-  DataListToggle,
-  Label,
-  PageSection,
-} from "@patternfly/react-core";
+import { DataList, Label, PageSection } from "@patternfly/react-core";
 import { CheckCircleIcon } from "@patternfly/react-icons";
 
 import type AuthenticationExecutionInfoRepresentation from "keycloak-admin/lib/defs/authenticationExecutionInfoRepresentation";
@@ -113,7 +103,13 @@ export const FlowDetails = () => {
       />
       <PageSection variant="light">
         {executions && executions.length > 0 && (
-          <DataList aria-label="flows">
+          <DataList
+            aria-label="flows"
+            onDragFinish={() => {}}
+            onDragStart={() => {}}
+            onDragMove={() => {}}
+            onDragCancel={() => {}}
+          >
             <FlowHeader />
             <>
               {executions.map((execution) => (

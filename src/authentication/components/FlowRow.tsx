@@ -9,6 +9,8 @@ import {
   DataListItem,
   DataListContent,
   DataListToggle,
+  Text,
+  TextVariants,
 } from "@patternfly/react-core";
 
 import type { ExpandableExecution } from "../FlowDetails";
@@ -22,8 +24,13 @@ type FlowRowProps = {
 
 export const FlowRow = ({ execution }: FlowRowProps) => {
   const { t } = useTranslation("authentication");
+  const hasSubList =
+    execution.executionList && execution.executionList.length > 0;
   return (
-    <DataListItem className="keycloak__authentication__flow-item">
+    <DataListItem
+      className="keycloak__authentication__flow-item"
+      id={execution.id}
+    >
       <DataListItemRow
         key={execution.id}
         id={execution.id}
@@ -37,21 +44,33 @@ export const FlowRow = ({ execution }: FlowRowProps) => {
             aria-describedby={t("common-help:dragHelp")}
           />
         </DataListControl>
-        <DataListToggle
-          onClick={() => {}}
-          isExpanded={execution.isCollapsed}
-          id={`toggle1-${execution.id}`}
-          aria-controls={`expand-${execution.id}`}
-        />
+        {hasSubList && (
+          <DataListToggle
+            onClick={() => {}}
+            isExpanded={execution.isCollapsed}
+            id={`toggle1-${execution.id}`}
+            aria-controls={`expand-${execution.id}`}
+          />
+        )}
         <DataListItemCells
           dataListCells={[
             <DataListCell key={`${execution.id}-name`}>
-              <FlowTitle key={execution.id} title={execution.displayName!} />
+              {!hasSubList && (
+                <FlowTitle key={execution.id} title={execution.displayName!} />
+              )}
+              {hasSubList && (
+                <>
+                  {execution.displayName} <br />{" "}
+                  <Text component={TextVariants.small}>
+                    {execution.description}
+                  </Text>
+                </>
+              )}
             </DataListCell>,
           ]}
         />
       </DataListItemRow>
-      {execution.executionList && execution.executionList.length > 0 && (
+      {hasSubList && (
         <DataListContent
           aria-label="Primary Content Details"
           id={`expand-${execution.id}`}
