@@ -87,8 +87,8 @@ export const ViewHeader = ({
               </LevelItem>
               {badges && (
                 <LevelItem>
-                  {badges.map((badge) => (
-                    <>
+                  {badges.map((badge, index) => (
+                    <Fragment key={index}>
                       {!isValidElement(badge.text) && (
                         <Fragment key={badge.text as string}>
                           <Badge data-testid={badge.id} isRead={badge.readonly}>
@@ -97,13 +97,12 @@ export const ViewHeader = ({
                         </Fragment>
                       )}
                       {isValidElement(badge.text) && <>{badge.text}</>}{" "}
-                    </>
+                    </Fragment>
                   ))}
                 </LevelItem>
               )}
             </Level>
           </LevelItem>
-          <LevelItem></LevelItem>
           <LevelItem>
             <Toolbar className="pf-u-p-0">
               <ToolbarContent>
