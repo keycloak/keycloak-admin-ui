@@ -7,7 +7,6 @@ import {
   DataListItemCells,
   DataListCell,
   DataListItem,
-  DataListContent,
   DataListToggle,
   Text,
   TextVariants,
@@ -20,69 +19,74 @@ import "./flow-row.css";
 
 type FlowRowProps = {
   execution: ExpandableExecution;
+  onRowClick: (execution: ExpandableExecution) => void;
 };
 
-export const FlowRow = ({ execution }: FlowRowProps) => {
+export const FlowRow = ({ execution, onRowClick }: FlowRowProps) => {
   const { t } = useTranslation("authentication");
   const hasSubList =
     execution.executionList && execution.executionList.length > 0;
   return (
-    <DataListItem
-      className="keycloak__authentication__flow-item"
-      id={execution.id}
-    >
-      <DataListItemRow
-        key={execution.id}
+    <>
+      <DataListItem
+        className="keycloak__authentication__flow-item"
         id={execution.id}
-        className="keycloak__authentication__flow-row"
-        aria-level={execution.level}
+        isExpanded={!execution.isCollapsed}
       >
-        <DataListControl>
-          <DataListDragButton
-            aria-label={t("common:reorder")}
-            aria-labelledby={execution.displayName}
-            aria-describedby={t("common-help:dragHelp")}
-          />
-        </DataListControl>
-        {hasSubList && (
-          <DataListToggle
-            onClick={() => {}}
-            isExpanded={execution.isCollapsed}
-            id={`toggle1-${execution.id}`}
-            aria-controls={`expand-${execution.id}`}
-          />
-        )}
-        <DataListItemCells
-          dataListCells={[
-            <DataListCell key={`${execution.id}-name`}>
-              {!hasSubList && (
-                <FlowTitle key={execution.id} title={execution.displayName!} />
-              )}
-              {hasSubList && (
-                <>
-                  {execution.displayName} <br />{" "}
-                  <Text component={TextVariants.small}>
-                    {execution.description}
-                  </Text>
-                </>
-              )}
-            </DataListCell>,
-          ]}
-        />
-      </DataListItemRow>
-      {hasSubList && (
-        <DataListContent
-          aria-label="Primary Content Details"
-          id={`expand-${execution.id}`}
-          isHidden={!open}
+        <DataListItemRow
+          key={execution.id}
+          id={execution.id}
+          className="keycloak__authentication__flow-row"
+          aria-level={execution.level}
         >
-          <>
-            {execution.executionList.map((execution) => (
-              <FlowRow key={execution.id} execution={execution} />
-            ))}
-          </>
-        </DataListContent>
+          <DataListControl>
+            <DataListDragButton
+              aria-label={t("common:reorder")}
+              aria-labelledby={execution.displayName}
+              aria-describedby={t("common-help:dragHelp")}
+            />
+          </DataListControl>
+          {hasSubList && (
+            <DataListToggle
+              onClick={() => onRowClick(execution)}
+              isExpanded={!execution.isCollapsed}
+              id={`toggle1-${execution.id}`}
+              aria-controls={`expand-${execution.id}`}
+            />
+          )}
+          <DataListItemCells
+            dataListCells={[
+              <DataListCell key={`${execution.id}-name`}>
+                {!hasSubList && (
+                  <FlowTitle
+                    key={execution.id}
+                    title={execution.displayName!}
+                  />
+                )}
+                {hasSubList && (
+                  <>
+                    {execution.displayName} <br />{" "}
+                    <Text component={TextVariants.small}>
+                      {execution.description}
+                    </Text>
+                  </>
+                )}
+              </DataListCell>,
+            ]}
+          />
+        </DataListItemRow>
+      </DataListItem>
+      {!execution.isCollapsed && hasSubList && (
+        <>
+          {execution.executionList.map((execution) => (
+            <FlowRow
+              key={execution.id}
+              execution={execution}
+              onRowClick={onRowClick}
+            />
+          ))}
+        </>
       )}
-    </DataListItem>
+    </>
   );
 };

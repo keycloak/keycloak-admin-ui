@@ -59,6 +59,17 @@ export const FlowDetails = () => {
     return execution;
   };
 
+  const order = (list: ExpandableExecution[]) => {
+    let result: ExpandableExecution[] = [];
+    for (const row of list) {
+      result.push(row);
+      if (row.executionList && !row.isCollapsed) {
+        result = result.concat(order(row.executionList));
+      }
+    }
+    return result;
+  };
+
   useFetch(
     async () => {
       const flows = await adminClient.authenticationManagement.getFlows();
@@ -106,14 +117,28 @@ export const FlowDetails = () => {
           <DataList
             aria-label="flows"
             onDragFinish={() => {}}
-            onDragStart={() => {}}
+            onDragStart={(id) => {
+              const item = order(executions).find((ex) => ex.id === id)!;
+              if (item.executionList && !item.isCollapsed) {
+                item.isCollapsed = true;
+                setExecutions([...executions]);
+              }
+            }}
             onDragMove={() => {}}
             onDragCancel={() => {}}
+            itemOrder={order(executions).map((ex) => ex.id!)}
           >
             <FlowHeader />
             <>
               {executions.map((execution) => (
-                <FlowRow key={execution.id} execution={execution} />
+                <FlowRow
+                  key={execution.id}
+                  execution={execution}
+                  onRowClick={(execution) => {
+                    execution.isCollapsed = !execution.isCollapsed;
+                    setExecutions([...executions]);
+                  }}
+                />
               ))}
             </>
           </DataList>

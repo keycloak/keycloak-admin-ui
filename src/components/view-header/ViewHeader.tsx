@@ -13,8 +13,6 @@ import {
   Toolbar,
   ToolbarContent,
   ToolbarItem,
-  Button,
-  ButtonVariant,
 } from "@patternfly/react-core";
 import React, { ReactElement, ReactNode, useState, isValidElement } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,7 +22,6 @@ import {
 } from "../external-link/FormattedLink";
 import { useHelp } from "../help-enabler/HelpHeader";
 import { HelpItem } from "../help-enabler/HelpItem";
-import { CheckCircleIcon } from "@patternfly/react-icons";
 
 export type ViewHeaderProps = {
   titleKey: string;
