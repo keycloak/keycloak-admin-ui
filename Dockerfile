@@ -10,8 +10,7 @@ COPY . .
 
 # replace Keycloak endpoints
 RUN sed -i "s/${DEFAULT_KEYCLOAK_ENDPOINT}/${KEYCLOAK_ENDPOINT}/g" import.js &&\
-    sed -i "s/${DEFAULT_KEYCLOAK_ENDPOINT}/${KEYCLOAK_ENDPOINT}/g" src/context/auth/keycloak.ts &&\
-    sed -i "s/adminv2//g" snowpack.config.js
+    sed -i "s/${DEFAULT_KEYCLOAK_ENDPOINT}/${KEYCLOAK_ENDPOINT}/g" src/context/auth/keycloak.ts
 
 # install dependencies and build application
 RUN npm ci

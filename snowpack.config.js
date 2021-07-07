@@ -5,7 +5,7 @@ module.exports = {
   },
   plugins: ["@snowpack/plugin-postcss", "@snowpack/plugin-webpack"],
   buildOptions: {
-    baseUrl: "/adminv2",
+    baseUrl: "./",
     clean: true,
   },
 };

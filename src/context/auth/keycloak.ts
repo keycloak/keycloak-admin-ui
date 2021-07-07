@@ -16,10 +16,6 @@ export default async function (): Promise<KcAdminClient> {
       }
     );
     kcAdminClient.setConfig({ realmName: realm });
-
-    // we can get rid of devMode once developers upgrade to Keycloak 13
-    const devMode = !window.location.pathname.startsWith("/adminv2");
-    kcAdminClient.baseUrl = devMode ? "/auth" : keycloakAuthUrl();
   } catch (error) {
     alert("failed to initialize keycloak");
   }
@@ -38,10 +34,6 @@ const keycloakAuthUrl = () => {
   // passed in as query param
   const authUrlFromParam = searchParams.get("keycloak-server");
   if (authUrlFromParam) return authUrlFromParam + authContext;
-
-  // dev mode
-  if (!window.location.pathname.startsWith("/adminv2"))
-    return "http://localhost:8180" + authContext;
 
   // demo mode
   if (searchParams.get("demo")) return "http://localhost:8080" + authContext;
