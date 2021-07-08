@@ -12,6 +12,7 @@ import { EmptyExecutionState } from "./EmptyExecutionState";
 import { toUpperCase } from "../util";
 import { FlowHeader } from "./components/FlowHeader";
 import { FlowRow } from "./components/FlowRow";
+import { ExecutionList } from "./execution-model";
 
 export type ExpandableExecution = AuthenticationExecutionInfoRepresentation & {
   executionList: ExpandableExecution[];
@@ -28,65 +29,22 @@ export const FlowDetails = () => {
   }>();
 
   const [flow, setFlow] = useState<AuthenticationFlowRepresentation>();
-  const [executions, setExecutions] = useState<ExpandableExecution[]>();
-
-  const transformToExpandableList = (
-    level: number,
-    list: ExpandableExecution[],
-    currIndex: number,
-    execution: ExpandableExecution
-  ) => {
-    for (let index = currIndex; index < list.length; index++) {
-      const ex = list[index];
-      const nextRowLevel = list[index + 1]?.level || 0;
-
-      if (ex.level === level && nextRowLevel === level) {
-        execution.executionList.push(ex);
-      } else if (ex.level === level) {
-        const expandable = transformToExpandableList(
-          nextRowLevel,
-          list,
-          index + 1,
-          {
-            ...ex,
-            executionList: [],
-            isCollapsed: false,
-          }
-        );
-        execution.executionList.push(expandable);
-      }
-    }
-    return execution;
-  };
-
-  const order = (list: ExpandableExecution[]) => {
-    let result: ExpandableExecution[] = [];
-    for (const row of list) {
-      result.push(row);
-      if (row.executionList && !row.isCollapsed) {
-        result = result.concat(order(row.executionList));
-      }
-    }
-    return result;
-  };
+  const [executionList, setExecutionList] = useState<ExecutionList>();
+  const [dragged, setDragged] = useState<ExpandableExecution>();
 
   useFetch(
     async () => {
       const flows = await adminClient.authenticationManagement.getFlows();
       const flow = flows.find((f) => f.id === id);
-      const executions = await adminClient.authenticationManagement.getExecutions(
-        { flow: flow?.alias! }
-      );
+      const executions =
+        await adminClient.authenticationManagement.getExecutions({
+          flow: flow?.alias!,
+        });
       return { flow, executions };
     },
     ({ flow, executions }) => {
       setFlow(flow);
-      setExecutions(
-        transformToExpandableList(0, executions as ExpandableExecution[], 0, {
-          executionList: [],
-          isCollapsed: false,
-        }).executionList
-      );
+      setExecutionList(new ExecutionList(executions));
     },
     []
   );
@@ -113,37 +71,50 @@ export const FlowDetails = () => {
         ]}
       />
       <PageSection variant="light">
-        {executions && executions.length > 0 && (
-          <DataList
-            aria-label="flows"
-            onDragFinish={() => {}}
-            onDragStart={(id) => {
-              const item = order(executions).find((ex) => ex.id === id)!;
-              if (item.executionList && !item.isCollapsed) {
-                item.isCollapsed = true;
-                setExecutions([...executions]);
-              }
-            }}
-            onDragMove={() => {}}
-            onDragCancel={() => {}}
-            itemOrder={order(executions).map((ex) => ex.id!)}
-          >
-            <FlowHeader />
-            <>
-              {executions.map((execution) => (
-                <FlowRow
-                  key={execution.id}
-                  execution={execution}
-                  onRowClick={(execution) => {
-                    execution.isCollapsed = !execution.isCollapsed;
-                    setExecutions([...executions]);
-                  }}
-                />
-              ))}
-            </>
-          </DataList>
-        )}
-        {!executions || (executions.length === 0 && <EmptyExecutionState />)}
+        {executionList?.expandableList &&
+          executionList.expandableList.length > 0 && (
+            <DataList
+              aria-label="flows"
+              onDragFinish={(order) => {
+                const index = order.findIndex((ex) => ex === dragged!.id);
+                const pref = executionList.findExecution(order[index - 1]);
+                console.log(pref);
+
+                if (((pref && pref.level) || 0) !== dragged!.level) {
+                  console.log("we are in trouble");
+                }
+              }}
+              onDragStart={(id) => {
+                const item = executionList.order().find((ex) => ex.id === id)!;
+                setDragged(item);
+                if (item.executionList && !item.isCollapsed) {
+                  item.isCollapsed = true;
+                  //setExecutions([...executions]);
+                }
+              }}
+              onDragMove={() => {}}
+              onDragCancel={() => {}}
+              itemOrder={executionList.order().map((ex) => ex.id!)}
+            >
+              <FlowHeader />
+              <>
+                {executionList.expandableList.map((execution) => (
+                  <FlowRow
+                    key={execution.id}
+                    execution={execution}
+                    onRowClick={(execution) => {
+                      execution.isCollapsed = !execution.isCollapsed;
+                      setExecutionList(executionList.clone());
+                    }}
+                  />
+                ))}
+              </>
+            </DataList>
+          )}
+        {!executionList?.expandableList ||
+          (executionList.expandableList.length === 0 && (
+            <EmptyExecutionState />
+          ))}
       </PageSection>
     </>
   );
