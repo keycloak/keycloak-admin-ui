@@ -12,7 +12,7 @@ import { EmptyExecutionState } from "./EmptyExecutionState";
 import { toUpperCase } from "../util";
 import { FlowHeader } from "./components/FlowHeader";
 import { FlowRow } from "./components/FlowRow";
-import { ExecutionList } from "./execution-model";
+import { ExecutionList, IndexChange, LevelChange } from "./execution-model";
 
 export type ExpandableExecution = AuthenticationExecutionInfoRepresentation & {
   executionList: ExpandableExecution[];
@@ -30,7 +30,7 @@ export const FlowDetails = () => {
 
   const [flow, setFlow] = useState<AuthenticationFlowRepresentation>();
   const [executionList, setExecutionList] = useState<ExecutionList>();
-  const [dragged, setDragged] = useState<ExpandableExecution>();
+  const [dragged, setDragged] = useState<AuthenticationFlowRepresentation>();
 
   useFetch(
     async () => {
@@ -48,6 +48,36 @@ export const FlowDetails = () => {
     },
     []
   );
+
+  const executeChange = async (
+    ex: AuthenticationFlowRepresentation,
+    change: LevelChange | IndexChange
+  ) => {
+    let id = ex.id!;
+    if ("parent" in change) {
+      await adminClient.authenticationManagement.delExecution({ id });
+      const result =
+        await adminClient.authenticationManagement.addExecutionToFlow({
+          flow: change.parent?.displayName! || flow?.alias!,
+          provider: ex.providerId!,
+        });
+      id = result.id!;
+    }
+    const c = change as IndexChange;
+    const times = c.newIndex - c.oldIndex;
+    console.log(c.newIndex, c.oldIndex);
+    for (let index = 0; index < Math.abs(times); index++) {
+      if (times > 0) {
+        await adminClient.authenticationManagement.lowerPriorityExecution({
+          id,
+        });
+      } else {
+        await adminClient.authenticationManagement.raisePriorityExecution({
+          id,
+        });
+      }
+    }
+  };
 
   return (
     <>
@@ -76,25 +106,27 @@ export const FlowDetails = () => {
             <DataList
               aria-label="flows"
               onDragFinish={(order) => {
-                const index = order.findIndex((ex) => ex === dragged!.id);
-                const pref = executionList.findExecution(order[index - 1]);
-                console.log(pref);
-
-                if (((pref && pref.level) || 0) !== dragged!.level) {
-                  console.log("we are in trouble");
-                }
+                const withoutHeaderId = order.slice(1);
+                const change = executionList.getChange(
+                  dragged!,
+                  withoutHeaderId
+                );
+                executeChange(dragged!, change);
               }}
               onDragStart={(id) => {
-                const item = executionList.order().find((ex) => ex.id === id)!;
+                const item = executionList.findExecution(id)!;
                 setDragged(item);
                 if (item.executionList && !item.isCollapsed) {
                   item.isCollapsed = true;
-                  //setExecutions([...executions]);
+                  setExecutionList(executionList.clone());
                 }
               }}
               onDragMove={() => {}}
               onDragCancel={() => {}}
-              itemOrder={executionList.order().map((ex) => ex.id!)}
+              itemOrder={[
+                "header",
+                ...executionList.order().map((ex) => ex.id!),
+              ]}
             >
               <FlowHeader />
               <>
