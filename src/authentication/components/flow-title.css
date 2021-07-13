@@ -1,5 +1,6 @@
 .keycloak__authentication__title {
   width: fit-content;
+  width: -moz-fit-content;
 }
 
 .keycloak__authentication__title .pf-c-card__body {
