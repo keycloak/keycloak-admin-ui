@@ -30,7 +30,9 @@ export const FlowDetails = () => {
 
   const [flow, setFlow] = useState<AuthenticationFlowRepresentation>();
   const [executionList, setExecutionList] = useState<ExecutionList>();
-  const [dragged, setDragged] = useState<AuthenticationFlowRepresentation>();
+  const [dragged, setDragged] =
+    useState<AuthenticationExecutionInfoRepresentation>();
+  const [liveText, setLiveText] = useState("");
 
   useFetch(
     async () => {
@@ -102,45 +104,60 @@ export const FlowDetails = () => {
       <PageSection variant="light">
         {executionList?.expandableList &&
           executionList.expandableList.length > 0 && (
-            <DataList
-              aria-label="flows"
-              onDragFinish={(order) => {
-                const withoutHeaderId = order.slice(1);
-                const change = executionList.getChange(
-                  dragged!,
-                  withoutHeaderId
-                );
-                executeChange(dragged!, change);
-              }}
-              onDragStart={(id) => {
-                const item = executionList.findExecution(id)!;
-                setDragged(item);
-                if (item.executionList && !item.isCollapsed) {
-                  item.isCollapsed = true;
-                  setExecutionList(executionList.clone());
+            <>
+              <DataList
+                aria-label="flows"
+                onDragFinish={(order) => {
+                  const withoutHeaderId = order.slice(1);
+                  setLiveText(
+                    t("common:onDragFinish", { list: dragged?.displayName })
+                  );
+                  const change = executionList.getChange(
+                    dragged!,
+                    withoutHeaderId
+                  );
+                  executeChange(dragged!, change);
+                }}
+                onDragStart={(id) => {
+                  const item = executionList.findExecution(id)!;
+                  setLiveText(
+                    t("common:onDragStart", { item: item.displayName })
+                  );
+                  setDragged(item);
+                  if (item.executionList && !item.isCollapsed) {
+                    item.isCollapsed = true;
+                    setExecutionList(executionList.clone());
+                  }
+                }}
+                onDragMove={() =>
+                  setLiveText(
+                    t("common:onDragMove", { item: dragged?.displayName })
+                  )
                 }
-              }}
-              onDragMove={() => {}}
-              onDragCancel={() => {}}
-              itemOrder={[
-                "header",
-                ...executionList.order().map((ex) => ex.id!),
-              ]}
-            >
-              <FlowHeader />
-              <>
-                {executionList.expandableList.map((execution) => (
-                  <FlowRow
-                    key={execution.id}
-                    execution={execution}
-                    onRowClick={(execution) => {
-                      execution.isCollapsed = !execution.isCollapsed;
-                      setExecutionList(executionList.clone());
-                    }}
-                  />
-                ))}
-              </>
-            </DataList>
+                onDragCancel={() => setLiveText(t("common:onDragCancel"))}
+                itemOrder={[
+                  "header",
+                  ...executionList.order().map((ex) => ex.id!),
+                ]}
+              >
+                <FlowHeader />
+                <>
+                  {executionList.expandableList.map((execution) => (
+                    <FlowRow
+                      key={execution.id}
+                      execution={execution}
+                      onRowClick={(execution) => {
+                        execution.isCollapsed = !execution.isCollapsed;
+                        setExecutionList(executionList.clone());
+                      }}
+                    />
+                  ))}
+                </>
+              </DataList>
+              <div className="pf-screen-reader" aria-live="assertive">
+                {liveText}
+              </div>
+            </>
           )}
         {!executionList?.expandableList ||
           (executionList.expandableList.length === 0 && (
