@@ -69,7 +69,7 @@ export class ExecutionList {
 
   order(list?: ExpandableExecution[]) {
     let result: ExpandableExecution[] = [];
-    for (const row of list || this.list) {
+    for (const row of list || this.expandableList) {
       result.push(row);
       if (row.executionList && !row.isCollapsed) {
         result = result.concat(this.order(row.executionList));
@@ -96,18 +96,17 @@ export class ExecutionList {
     return found;
   }
 
-  private getParentNodesIndex() {
-    const result = [];
+  private getParentNodes(level?: number) {
     for (let index = 0; index < this.list.length; index++) {
       const ex = this.list[index];
       if (
         index + 1 < this.list.length &&
-        this.list[index + 1].level! > ex.level!
+        this.list[index + 1].level! > ex.level! &&
+        ex.level! + 1 === level
       ) {
-        result.push(index);
+        return ex;
       }
     }
-    return result;
   }
 
   getChange(
@@ -120,17 +119,14 @@ export class ExecutionList {
       currentOrder[currentOrder.findIndex((ex) => ex.id === changed.id)];
     const newLocation = currentOrder[newLocIndex];
 
-    const parents = this.getParentNodesIndex();
-
     if (newLocation.level !== oldLocation.level) {
-      for (const index of parents.reverse()) {
-        if (index < newLocIndex) {
-          return new LevelChange(
-            this.findExecution(this.list[index].id!)!.executionList.length,
-            newLocation.index!,
-            this.list[index]
-          );
-        }
+      if (newLocation.level! > 0) {
+        const parent = this.getParentNodes(newLocation.level);
+        return new LevelChange(
+          parent?.executionList?.length || 0,
+          newLocation.index!,
+          parent
+        );
       }
       return new LevelChange(this.expandableList.length, newLocation.index!);
     }

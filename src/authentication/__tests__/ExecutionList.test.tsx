@@ -132,4 +132,19 @@ describe("ExecutionList", () => {
     expect(diff).toBeInstanceOf(IndexChange);
     expect((diff as IndexChange).newIndex).toBe(0);
   });
+
+  it("Move 5 to the bottom", () => {
+    const diff = list2.getChange({ id: "5" }, [
+      "1",
+      "2",
+      "3",
+      "4",
+      "6",
+      "7",
+      "5",
+    ]);
+
+    expect(diff).toBeInstanceOf(LevelChange);
+    expect((diff as LevelChange).parent).toBeUndefined();
+  });
 });

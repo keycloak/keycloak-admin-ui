@@ -65,7 +65,6 @@ export const FlowDetails = () => {
     }
     const c = change as IndexChange;
     const times = c.newIndex - c.oldIndex;
-    console.log(c.newIndex, c.oldIndex);
     for (let index = 0; index < Math.abs(times); index++) {
       if (times > 0) {
         await adminClient.authenticationManagement.lowerPriorityExecution({
