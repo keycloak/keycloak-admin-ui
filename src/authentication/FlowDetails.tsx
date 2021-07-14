@@ -1,8 +1,16 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { DataList, Label, PageSection } from "@patternfly/react-core";
-import { CheckCircleIcon } from "@patternfly/react-icons";
+import {
+  DataList,
+  Label,
+  PageSection,
+  Toolbar,
+  ToolbarContent,
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@patternfly/react-core";
+import { CheckCircleIcon, TableIcon } from "@patternfly/react-icons";
 
 import type AuthenticationExecutionInfoRepresentation from "keycloak-admin/lib/defs/authenticationExecutionInfoRepresentation";
 import type AuthenticationFlowRepresentation from "keycloak-admin/lib/defs/authenticationFlowRepresentation";
@@ -13,6 +21,7 @@ import { toUpperCase } from "../util";
 import { FlowHeader } from "./components/FlowHeader";
 import { FlowRow } from "./components/FlowRow";
 import { ExecutionList, IndexChange, LevelChange } from "./execution-model";
+import { FlowDiagram } from "./components/FlowDiagram";
 
 export type ExpandableExecution = AuthenticationExecutionInfoRepresentation & {
   executionList: ExpandableExecution[];
@@ -28,6 +37,7 @@ export const FlowDetails = () => {
     buildIn: string;
   }>();
 
+  const [tableView, setTableView] = useState(true);
   const [flow, setFlow] = useState<AuthenticationFlowRepresentation>();
   const [executionList, setExecutionList] = useState<ExecutionList>();
   const [dragged, setDragged] =
@@ -102,7 +112,28 @@ export const FlowDetails = () => {
         ]}
       />
       <PageSection variant="light">
-        {executionList?.expandableList &&
+        <Toolbar id="toolbar">
+          <ToolbarContent>
+            <ToggleGroup>
+              <ToggleGroupItem
+                icon={<TableIcon />}
+                aria-label="copy icon button"
+                buttonId="third"
+                isSelected={tableView}
+                onChange={() => setTableView(true)}
+              />
+              <ToggleGroupItem
+                icon={<i className="fas fa-project-diagram"></i>}
+                aria-label="undo icon button"
+                buttonId="fourth"
+                isSelected={!tableView}
+                onChange={() => setTableView(false)}
+              />
+            </ToggleGroup>
+          </ToolbarContent>
+        </Toolbar>
+        {tableView &&
+          executionList?.expandableList &&
           executionList.expandableList.length > 0 && (
             <>
               <DataList
@@ -159,6 +190,9 @@ export const FlowDetails = () => {
               </div>
             </>
           )}
+        {!tableView && executionList?.expandableList && (
+          <FlowDiagram executionList={executionList} />
+        )}
         {!executionList?.expandableList ||
           (executionList.expandableList.length === 0 && (
             <EmptyExecutionState />
