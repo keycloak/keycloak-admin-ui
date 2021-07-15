@@ -1,8 +1,9 @@
 import React from "react";
-import ReactFlow, { Elements, Position, isNode } from "react-flow-renderer";
-import dagre from "dagre";
+import ReactFlow, { Elements, Position } from "react-flow-renderer";
 
 import type { ExecutionList, ExpandableExecution } from "../execution-model";
+import { ConditionalNode } from "./ConditionalNode";
+import { getLayoutedElements } from "./auto-layout";
 
 import "./flow-diagram.css";
 
@@ -26,6 +27,7 @@ const convert = (expandableList: ExpandableExecution[]) => {
   for (const ex of expandableList) {
     result.push({
       id: ex.id!,
+      type: ex.requirement === "CONDITIONAL" ? "conditionalNode" : undefined,
       sourcePosition: Position.Right,
       targetPosition: Position.Left,
       data: { label: ex.displayName! },
@@ -45,47 +47,6 @@ const convert = (expandableList: ExpandableExecution[]) => {
 export const FlowDiagram = ({
   executionList: { expandableList },
 }: FlowDiagramProps) => {
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-  const nodeWidth = 130;
-  const nodeHeight = 28;
-
-  const getLayoutedElements = (elements: Elements, direction = "TB") => {
-    const isHorizontal = direction === "LR";
-    dagreGraph.setGraph({ rankdir: direction });
-
-    elements.forEach((element) => {
-      if (isNode(element)) {
-        dagreGraph.setNode(element.id, {
-          width: nodeWidth,
-          height: nodeHeight,
-        });
-      } else {
-        dagreGraph.setEdge(element.source, element.target);
-      }
-    });
-
-    dagre.layout(dagreGraph);
-
-    return elements.map((element) => {
-      if (isNode(element)) {
-        const nodeWithPosition = dagreGraph.node(element.id);
-        element.targetPosition = isHorizontal ? Position.Left : Position.Top;
-        element.sourcePosition = isHorizontal
-          ? Position.Right
-          : Position.Bottom;
-
-        element.position = {
-          x: nodeWithPosition.x - nodeWidth / 2 + Math.random() / 1000,
-          y: nodeWithPosition.y - nodeHeight / 2,
-        };
-      }
-
-      return element;
-    });
-  };
-
   let elements = convert(expandableList);
   elements.unshift({
     id: "start",
@@ -106,5 +67,12 @@ export const FlowDiagram = ({
 
   elements = elements.concat(createEdge("start", expandableList));
 
-  return <ReactFlow elements={getLayoutedElements(elements, "LR")} />;
+  return (
+    <ReactFlow
+      nodeTypes={{
+        conditionalNode: ConditionalNode,
+      }}
+      elements={getLayoutedElements(elements)}
+    />
+  );
 };
