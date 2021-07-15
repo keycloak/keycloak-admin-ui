@@ -9,3 +9,14 @@
   background-color: var(--pf-global--BackgroundColor--200);
   border: 0;
 }
+
+.keycloak__authentication__conditional_node {
+  border: 1px solid #777;
+  width: 80px;
+  height: 80px;
+  transform: rotate(45deg);
+}
+
+.keycloak__authentication__conditional_node div {
+  transform: rotate(-45deg);
+}
