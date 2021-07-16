@@ -51,11 +51,11 @@ export const NewClientForm = () => {
     }
   };
 
-  const forward = async (onNext: () => void) => {
+  const forward = async (onNext?: () => void) => {
     if (await methods.trigger()) {
       setClient({ ...client, ...methods.getValues() });
       setShowCapabilityConfig(true);
-      onNext();
+      onNext?.();
     }
   };
 
@@ -68,7 +68,7 @@ export const NewClientForm = () => {
     if (newStep.id === "generalSettings") {
       back();
     } else {
-      forward(() => {});
+      forward();
     }
   };
 
