@@ -1,6 +1,7 @@
 import React from "react";
 import ReactFlow, { Elements, Position } from "react-flow-renderer";
 
+import type AuthenticationExecutionInfoRepresentation from "keycloak-admin/lib/defs/authenticationExecutionInfoRepresentation";
 import type { ExecutionList, ExpandableExecution } from "../execution-model";
 import { EndSubFlowNode, StartSubFlowNode } from "./diagram/SubFlowNode";
 import { ConditionalNode } from "./diagram/ConditionalNode";
@@ -18,64 +19,117 @@ const createEdge = (fromNode: string, toNode: string) => ({
   target: toNode,
 });
 
-const createNode = (parentNode: string, ex: ExpandableExecution) => {
-  const result: Elements = [];
+const createNode = (ex: ExpandableExecution) => {
   let nodeType: string | undefined = undefined;
   if (ex.executionList) {
     nodeType = "startSubFlow";
   }
-  if (ex.requirement === "CONDITIONAL") {
+  if (ex.displayName?.startsWith("Condition")) {
     nodeType = "conditional";
   }
-  result.push({
+  return {
     id: ex.id!,
     type: nodeType,
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
     data: { label: ex.displayName! },
     position: { x: 0, y: 0 },
-  });
-
-  result.push(createEdge(parentNode, ex.id!));
-  return result;
+  };
 };
 
-const subFlow = (
-  parentNode: ExpandableExecution,
+const renderParallelNodes = (
+  start: AuthenticationExecutionInfoRepresentation,
   executionList: ExpandableExecution[],
-  endNode: string
+  end: AuthenticationExecutionInfoRepresentation
 ) => {
-  let elements: Elements = [];
-  const endSubFlowId = `${parentNode.id!}-end`;
-  elements.push({
-    id: endSubFlowId,
-    type: "endSubFlow",
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
-    data: { label: parentNode.displayName! },
-    position: { x: 0, y: 0 },
-  });
+  const elements: Elements = [];
+  for (const execution of executionList) {
+    elements.push(createNode(execution));
+    elements.push(createEdge(start.id!, execution.id!));
+    elements.push(createEdge(execution.id!, end.id!));
+  }
+  return elements;
+};
 
-  let hasSubList = false;
+const renderSequentialNodes = (
+  start: AuthenticationExecutionInfoRepresentation,
+  executionList: ExpandableExecution[],
+  end: AuthenticationExecutionInfoRepresentation
+) => {
+  const elements: Elements = [];
   for (let index = 0; index < executionList.length; index++) {
     const execution = executionList[index];
-    elements = elements.concat(
-      createNode(executionList[index - 1]?.id || parentNode.id!, execution)
-    );
-    if (execution.executionList) {
-      hasSubList = true;
-      elements = elements.concat(
-        subFlow(execution, execution.executionList, endSubFlowId)
-      );
+    elements.push(createNode(execution));
+    if (index === 0) {
+      elements.push(createEdge(start.id!, execution.id!));
+    } else {
+      elements.push(createEdge(executionList[index - 1].id!, execution.id!));
+    }
+
+    if (index === executionList.length - 1) {
+      elements.push(createEdge(executionList[index].id!, end.id!));
     }
   }
 
-  if (!hasSubList) {
-    elements.push(
-      createEdge(executionList[executionList.length - 1].id!, endSubFlowId)
+  return elements;
+};
+
+const renderFlow = (
+  start: AuthenticationExecutionInfoRepresentation,
+  executionList: ExpandableExecution[],
+  end: AuthenticationExecutionInfoRepresentation
+) => {
+  let elements: Elements = [];
+
+  const alternativeNodes = executionList.filter(
+    (ex) => ex.requirement === "ALTERNATIVE" && ex.executionList === undefined
+  );
+  if (alternativeNodes) {
+    elements = elements.concat(
+      renderParallelNodes(start, alternativeNodes, end)
     );
   }
-  elements.push(createEdge(endSubFlowId, endNode));
+
+  const sequentialNodes = executionList.filter(
+    (ex) => ex.requirement !== "ALTERNATIVE" && ex.executionList === undefined
+  );
+  if (sequentialNodes) {
+    elements = elements.concat(
+      renderSequentialNodes(start, sequentialNodes, end)
+    );
+  }
+
+  const subFlows = executionList.filter((ex) => !!ex.executionList);
+  if (subFlows) {
+    subFlows.map((execution) => {
+      elements.push({
+        id: execution.id!,
+        type: "startSubFlow",
+        sourcePosition: Position.Right,
+        targetPosition: Position.Left,
+        data: { label: execution.displayName! },
+        position: { x: 0, y: 0 },
+      });
+      const endSubFlowId = `flow-end-${execution.id}`;
+      elements.push({
+        id: endSubFlowId,
+        type: "endSubFlow",
+        sourcePosition: Position.Right,
+        targetPosition: Position.Left,
+        data: { label: execution.displayName! },
+        position: { x: 0, y: 0 },
+      });
+      elements.push(createEdge(start.id!, execution.id!));
+      elements.push(createEdge(endSubFlowId, end.id!));
+
+      elements = elements.concat(
+        renderFlow(execution, execution.executionList, {
+          ...execution,
+          id: endSubFlowId,
+        })
+      );
+    });
+  }
 
   return elements;
 };
@@ -102,14 +156,9 @@ export const FlowDiagram = ({
     },
   ];
 
-  for (const ex of expandableList) {
-    elements = elements.concat(createNode("start", ex));
-    if (ex.executionList) {
-      elements = elements.concat(subFlow(ex, ex.executionList, "end"));
-    } else {
-      elements.push(createEdge(ex.id!, "end"));
-    }
-  }
+  elements = elements.concat(
+    renderFlow({ id: "start" }, expandableList, { id: "end" })
+  );
 
   return (
     <ReactFlow
