@@ -1,0 +1,20 @@
+name: Maven CI
+on:
+  push:
+    branches: [master]
+defaults:
+  run:
+    working-directory: keycloak-theme
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - run: mvn --batch-mode package
+      - uses: actions/upload-artifact@v2
+        with:
+          path: target/**/*.jar
