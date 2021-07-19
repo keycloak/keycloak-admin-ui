@@ -39,39 +39,80 @@ const createNode = (ex: ExpandableExecution) => {
 
 const renderParallelNodes = (
   start: AuthenticationExecutionInfoRepresentation,
-  executionList: ExpandableExecution[],
+  execution: ExpandableExecution,
   end: AuthenticationExecutionInfoRepresentation
 ) => {
   const elements: Elements = [];
-  for (const execution of executionList) {
-    elements.push(createNode(execution));
-    elements.push(createEdge(start.id!, execution.id!));
-    elements.push(createEdge(execution.id!, end.id!));
-  }
+  elements.push(createNode(execution));
+  elements.push(createEdge(start.id!, execution.id!));
+  elements.push(createEdge(execution.id!, end.id!));
   return elements;
 };
 
 const renderSequentialNodes = (
   start: AuthenticationExecutionInfoRepresentation,
-  executionList: ExpandableExecution[],
-  end: AuthenticationExecutionInfoRepresentation
+  execution: ExpandableExecution,
+  end: AuthenticationExecutionInfoRepresentation,
+  prefExecution: ExpandableExecution,
+  isFirst: boolean,
+  isLast: boolean
 ) => {
   const elements: Elements = [];
-  for (let index = 0; index < executionList.length; index++) {
-    const execution = executionList[index];
-    elements.push(createNode(execution));
-    if (index === 0) {
-      elements.push(createEdge(start.id!, execution.id!));
-    } else {
-      elements.push(createEdge(executionList[index - 1].id!, execution.id!));
-    }
+  elements.push(createNode(execution));
+  if (isFirst) {
+    elements.push(createEdge(start.id!, execution.id!));
+  } else {
+    elements.push(createEdge(prefExecution.id!, execution.id!));
+  }
 
-    if (index === executionList.length - 1) {
-      elements.push(createEdge(executionList[index].id!, end.id!));
-    }
+  if (isLast) {
+    elements.push(createEdge(execution.id!, end.id!));
   }
 
   return elements;
+};
+
+const renderSubFlow = (
+  execution: ExpandableExecution,
+  start: AuthenticationExecutionInfoRepresentation,
+  end: AuthenticationExecutionInfoRepresentation,
+  prefExecution?: ExpandableExecution
+) => {
+  const elements: Elements = [];
+
+  elements.push({
+    id: execution.id!,
+    type: "startSubFlow",
+    sourcePosition: Position.Right,
+    targetPosition: Position.Left,
+    data: { label: execution.displayName! },
+    position: { x: 0, y: 0 },
+  });
+  const endSubFlowId = `flow-end-${execution.id}`;
+  elements.push({
+    id: endSubFlowId,
+    type: "endSubFlow",
+    sourcePosition: Position.Right,
+    targetPosition: Position.Left,
+    data: { label: execution.displayName! },
+    position: { x: 0, y: 0 },
+  });
+  elements.push(
+    createEdge(
+      prefExecution && prefExecution.requirement !== "ALTERNATIVE"
+        ? prefExecution.id!
+        : start.id!,
+      execution.id!
+    )
+  );
+  elements.push(createEdge(endSubFlowId, end.id!));
+
+  return elements.concat(
+    renderFlow(execution, execution.executionList, {
+      ...execution,
+      id: endSubFlowId,
+    })
+  );
 };
 
 const renderFlow = (
@@ -81,54 +122,31 @@ const renderFlow = (
 ) => {
   let elements: Elements = [];
 
-  const alternativeNodes = executionList.filter(
-    (ex) => ex.requirement === "ALTERNATIVE" && ex.executionList === undefined
-  );
-  if (alternativeNodes) {
-    elements = elements.concat(
-      renderParallelNodes(start, alternativeNodes, end)
-    );
-  }
-
-  const sequentialNodes = executionList.filter(
-    (ex) => ex.requirement !== "ALTERNATIVE" && ex.executionList === undefined
-  );
-  if (sequentialNodes) {
-    elements = elements.concat(
-      renderSequentialNodes(start, sequentialNodes, end)
-    );
-  }
-
-  const subFlows = executionList.filter((ex) => !!ex.executionList);
-  if (subFlows) {
-    subFlows.map((execution) => {
-      elements.push({
-        id: execution.id!,
-        type: "startSubFlow",
-        sourcePosition: Position.Right,
-        targetPosition: Position.Left,
-        data: { label: execution.displayName! },
-        position: { x: 0, y: 0 },
-      });
-      const endSubFlowId = `flow-end-${execution.id}`;
-      elements.push({
-        id: endSubFlowId,
-        type: "endSubFlow",
-        sourcePosition: Position.Right,
-        targetPosition: Position.Left,
-        data: { label: execution.displayName! },
-        position: { x: 0, y: 0 },
-      });
-      elements.push(createEdge(start.id!, execution.id!));
-      elements.push(createEdge(endSubFlowId, end.id!));
-
+  for (let index = 0; index < executionList.length; index++) {
+    const execution = executionList[index];
+    if (execution.executionList) {
       elements = elements.concat(
-        renderFlow(execution, execution.executionList, {
-          ...execution,
-          id: endSubFlowId,
-        })
+        renderSubFlow(execution, start, end, executionList[index - 1])
       );
-    });
+    } else {
+      if (
+        execution.requirement === "ALTERNATIVE" ||
+        execution.requirement === "DISABLED"
+      ) {
+        elements = elements.concat(renderParallelNodes(start, execution, end));
+      } else {
+        elements = elements.concat(
+          renderSequentialNodes(
+            start,
+            execution,
+            end,
+            executionList[index - 1],
+            index === 0,
+            index === executionList.length - 1
+          )
+        );
+      }
+    }
   }
 
   return elements;
