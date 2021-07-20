@@ -218,7 +218,6 @@ export const ClientScopesSection = () => {
           actions={[
             {
               title: t("common:export"),
-              onRowClick: () => {},
             },
             {
               title: t("common:delete"),

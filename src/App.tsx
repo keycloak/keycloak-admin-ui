@@ -74,7 +74,7 @@ export const App = () => {
             onReset={() => window.location.reload()}
           >
             <Switch>
-              {routes(() => {}).map((route, i) => (
+              {routes().map((route, i) => (
                 <Route
                   exact={
                     route.matchOptions?.exact === undefined
