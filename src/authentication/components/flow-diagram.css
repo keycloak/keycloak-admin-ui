@@ -30,3 +30,23 @@
   justify-content: center;
   background-color: var(--pf-global--BackgroundColor--200);
 }
+
+.keycloak__authentication__input_node.selected,
+.keycloak__authentication__input_node:hover,
+.keycloak__authentication__output_node.selected,
+.keycloak__authentication__output_node:hover,
+.keycloak__authentication__subflow_node.selected,
+.keycloak__authentication__subflow_node:hover,
+.keycloak__authentication__conditional_node.selected,
+.keycloak__authentication__conditional_node:hover {
+  box-shadow: 0 0 0 0.5px #1a192b;
+}
+
+.edgebutton {
+  background-color: var(--pf-global--BackgroundColor--200);
+  border: 1px solid var(--pf-global--BackgroundColor--100);
+  border-radius: 50%;
+  cursor: pointer;
+  height: 33px;
+  width: 33px;
+}

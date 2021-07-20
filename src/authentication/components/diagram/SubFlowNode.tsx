@@ -3,6 +3,7 @@ import { Handle, Position } from "react-flow-renderer";
 
 type NodeProps = {
   data: { label: string };
+  selected: boolean;
 };
 
 type SubFlowNodeProps = NodeProps & {
@@ -12,11 +13,16 @@ type SubFlowNodeProps = NodeProps & {
 export const SubFlowNode = memo(function TheNode({
   data: { label },
   prefix,
+  selected,
 }: SubFlowNodeProps) {
   return (
     <>
       <Handle position={Position.Right} type="source" />
-      <div className="react-flow__node-default keycloak__authentication__subflow_node">
+      <div
+        className={`react-flow__node-default keycloak__authentication__subflow_node ${
+          selected ? "selected" : ""
+        }`}
+      >
         <div>
           {prefix} {label}
         </div>

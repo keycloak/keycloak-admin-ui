@@ -1,10 +1,30 @@
-import React from "react";
-import ReactFlow, { Elements, Position } from "react-flow-renderer";
+import React, { useState, MouseEvent } from "react";
+import {
+  Drawer,
+  DrawerActions,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerContentBody,
+  DrawerHead,
+  DrawerPanelContent,
+} from "@patternfly/react-core";
+import ReactFlow, {
+  Node,
+  Edge,
+  Elements,
+  Position,
+  removeElements,
+  MiniMap,
+  Controls,
+  Background,
+  isNode,
+} from "react-flow-renderer";
 
 import type AuthenticationExecutionInfoRepresentation from "keycloak-admin/lib/defs/authenticationExecutionInfoRepresentation";
 import type { ExecutionList, ExpandableExecution } from "../execution-model";
 import { EndSubFlowNode, StartSubFlowNode } from "./diagram/SubFlowNode";
 import { ConditionalNode } from "./diagram/ConditionalNode";
+import { ButtonEdge } from "./diagram/ButtonEdge";
 import { getLayoutedElements } from "./diagram/auto-layout";
 
 import "./flow-diagram.css";
@@ -15,8 +35,18 @@ type FlowDiagramProps = {
 
 const createEdge = (fromNode: string, toNode: string) => ({
   id: `edge-${fromNode}-to-${toNode}`,
+  type: "buttonEdge",
   source: fromNode,
   target: toNode,
+  data: {
+    onEdgeClick: (
+      evt: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+      id: string
+    ) => {
+      evt.stopPropagation();
+      alert(`hello ${id}`);
+    },
+  },
 });
 
 const createNode = (ex: ExpandableExecution) => {
@@ -178,14 +208,57 @@ export const FlowDiagram = ({
     renderFlow({ id: "start" }, expandableList, { id: "end" })
   );
 
+  const onLoad = (reactFlowInstance: { fitView: () => void }) =>
+    reactFlowInstance.fitView();
+
+  const [layoutedElements, setElements] = useState(
+    getLayoutedElements(elements)
+  );
+  const [expandDrawer, setExpandDrawer] = useState(false);
+
+  const onElementClick = (_event: MouseEvent, element: Node | Edge) => {
+    if (isNode(element)) setExpandDrawer(!expandDrawer);
+  };
+
+  const onElementsRemove = (elementsToRemove: Elements) =>
+    setElements((els) => removeElements(elementsToRemove, els));
+
   return (
-    <ReactFlow
-      nodeTypes={{
-        conditional: ConditionalNode,
-        startSubFlow: StartSubFlowNode,
-        endSubFlow: EndSubFlowNode,
-      }}
-      elements={getLayoutedElements(elements)}
-    />
+    <Drawer isExpanded={expandDrawer} onExpand={() => setExpandDrawer(true)}>
+      <DrawerContent
+        panelContent={
+          <DrawerPanelContent>
+            <DrawerHead>
+              <span tabIndex={expandDrawer ? 0 : -1}>drawer-panel</span>
+              <DrawerActions>
+                <DrawerCloseButton onClick={() => setExpandDrawer(false)} />
+              </DrawerActions>
+            </DrawerHead>
+          </DrawerPanelContent>
+        }
+      >
+        <DrawerContentBody>
+          <ReactFlow
+            nodeTypes={{
+              conditional: ConditionalNode,
+              startSubFlow: StartSubFlowNode,
+              endSubFlow: EndSubFlowNode,
+            }}
+            edgeTypes={{
+              buttonEdge: ButtonEdge,
+            }}
+            onElementClick={onElementClick}
+            onElementsRemove={onElementsRemove}
+            onLoad={onLoad}
+            elements={layoutedElements}
+            nodesConnectable={false}
+          >
+            <MiniMap />
+            <Controls />
+            <Background />
+          </ReactFlow>
+        </DrawerContentBody>
+      </DrawerContent>
+    </Drawer>
   );
 };
