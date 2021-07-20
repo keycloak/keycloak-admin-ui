@@ -1,31 +1,28 @@
-import React, { ReactNode, useEffect } from "react";
 import { Page } from "@patternfly/react-core";
+import React, { FunctionComponent, useEffect } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import {
   HashRouter as Router,
   Route,
   Switch,
   useParams,
 } from "react-router-dom";
-import { ErrorBoundary } from "react-error-boundary";
-
-import { Header } from "./PageHeader";
-import { PageNav } from "./PageNav";
-import { Help } from "./components/help-enabler/HelpHeader";
-
-import { ServerInfoProvider } from "./context/server-info/ServerInfoProvider";
 import { AlertProvider } from "./components/alert/Alerts";
-
-import { AccessContextProvider, useAccess } from "./context/access/Access";
-import { routes, RouteDef } from "./route-config";
 import { PageBreadCrumbs } from "./components/bread-crumb/PageBreadCrumbs";
+import { ErrorRenderer } from "./components/error/ErrorRenderer";
+import { Help } from "./components/help-enabler/HelpHeader";
+import { AccessContextProvider, useAccess } from "./context/access/Access";
+import { useRealm } from "./context/realm-context/RealmContext";
+import { ServerInfoProvider } from "./context/server-info/ServerInfoProvider";
 import { ForbiddenSection } from "./ForbiddenSection";
 import { SubGroups } from "./groups/SubGroupsContext";
-import { useRealm } from "./context/realm-context/RealmContext";
-import { ErrorRenderer } from "./components/error/ErrorRenderer";
+import { Header } from "./PageHeader";
+import { PageNav } from "./PageNav";
+import routes, { RouteConfig } from "./routes";
 
 export const mainPageContentId = "kc-main-content-page-container";
 
-const AppContexts = ({ children }: { children: ReactNode }) => (
+const AppContexts: FunctionComponent = ({ children }) => (
   <AccessContextProvider>
     <Help>
       <AlertProvider>
@@ -37,10 +34,11 @@ const AppContexts = ({ children }: { children: ReactNode }) => (
   </AccessContextProvider>
 );
 
-// set the realm form the path
-const RealmPathSelector = ({ children }: { children: ReactNode }) => {
+// TODO: Handle this logic in the provider of the realm
+const RealmPathSelector: FunctionComponent = ({ children }) => {
   const { setRealm } = useRealm();
   const { realm } = useParams<{ realm: string }>();
+
   useEffect(() => {
     if (realm) setRealm(realm);
   }, []);
@@ -50,7 +48,8 @@ const RealmPathSelector = ({ children }: { children: ReactNode }) => {
 
 // If someone tries to go directly to a route they don't
 // have access to, show forbidden page.
-type SecuredRouteProps = { route: RouteDef };
+type SecuredRouteProps = { route: RouteConfig };
+
 const SecuredRoute = ({ route }: SecuredRouteProps) => {
   const { hasAccess } = useAccess();
   if (hasAccess(route.access)) return <route.component />;
@@ -74,13 +73,8 @@ export const App = () => {
             onReset={() => window.location.reload()}
           >
             <Switch>
-              {routes(() => {}).map((route, i) => (
+              {routes.map((route, i) => (
                 <Route
-                  exact={
-                    route.matchOptions?.exact === undefined
-                      ? true
-                      : route.matchOptions.exact
-                  }
                   key={i}
                   path={route.path}
                   component={() => (
