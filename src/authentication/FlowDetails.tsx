@@ -112,26 +112,29 @@ export const FlowDetails = () => {
         ]}
       />
       <PageSection variant="light">
-        <Toolbar id="toolbar">
-          <ToolbarContent>
-            <ToggleGroup>
-              <ToggleGroupItem
-                icon={<TableIcon />}
-                aria-label="copy icon button"
-                buttonId="third"
-                isSelected={tableView}
-                onChange={() => setTableView(true)}
-              />
-              <ToggleGroupItem
-                icon={<i className="fas fa-project-diagram"></i>}
-                aria-label="undo icon button"
-                buttonId="fourth"
-                isSelected={!tableView}
-                onChange={() => setTableView(false)}
-              />
-            </ToggleGroup>
-          </ToolbarContent>
-        </Toolbar>
+        {executionList?.expandableList &&
+          executionList.expandableList.length > 0 && (
+            <Toolbar id="toolbar">
+              <ToolbarContent>
+                <ToggleGroup>
+                  <ToggleGroupItem
+                    icon={<TableIcon />}
+                    aria-label="copy icon button"
+                    buttonId="third"
+                    isSelected={tableView}
+                    onChange={() => setTableView(true)}
+                  />
+                  <ToggleGroupItem
+                    icon={<i className="fas fa-project-diagram"></i>}
+                    aria-label="undo icon button"
+                    buttonId="fourth"
+                    isSelected={!tableView}
+                    onChange={() => setTableView(false)}
+                  />
+                </ToggleGroup>
+              </ToolbarContent>
+            </Toolbar>
+          )}
         {tableView &&
           executionList?.expandableList &&
           executionList.expandableList.length > 0 && (

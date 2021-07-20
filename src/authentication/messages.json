@@ -36,6 +36,12 @@
     "addSubFlowTitle": "Add a sub-flow",
     "addSubFlow": "Add sub-flow",
     "steps": "Steps",
-    "requirement": "Requirement"
+    "requirement": "Requirement",
+    "requirements": {
+      "REQUIRED": "Required",
+      "ALTERNATIVE": "Alternative",
+      "DISABLED": "Disabled",
+      "CONDITIONAL": "Conditional"
+    }
   }
 }

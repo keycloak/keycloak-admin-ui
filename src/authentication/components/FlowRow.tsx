@@ -14,6 +14,7 @@ import {
 
 import type { ExpandableExecution } from "../FlowDetails";
 import { FlowTitle } from "./FlowTitle";
+import { FlowRequirementDropdown } from "./FlowRequirementDropdown";
 
 import "./flow-row.css";
 
@@ -71,6 +72,9 @@ export const FlowRow = ({ execution, onRowClick }: FlowRowProps) => {
                     </Text>
                   </>
                 )}
+              </DataListCell>,
+              <DataListCell key={`${execution.id}-requirement`}>
+                <FlowRequirementDropdown flow={execution} />
               </DataListCell>,
             ]}
           />
