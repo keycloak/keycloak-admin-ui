@@ -27,6 +27,8 @@ import { PageNotFoundSection } from "./PageNotFoundSection";
 import { RealmRolesSection } from "./realm-roles/RealmRolesSection";
 import { RealmRoleTabs } from "./realm-roles/RealmRoleTabs";
 import { AESGeneratedSettings } from "./realm-settings/key-providers/aes-generated/AESGeneratedForm";
+import { CreateFlow } from "./authentication/form/CreateFlow";
+import { FlowDetails } from "./authentication/FlowDetails";
 import { ECDSAGeneratedSettings } from "./realm-settings/key-providers/ecdsa-generated/ECDSAGeneratedForm";
 import { HMACGeneratedSettings } from "./realm-settings/key-providers/hmac-generated/HMACGeneratedForm";
 import { JavaKeystoreSettings } from "./realm-settings/key-providers/java-keystore/JavaKeystoreForm";
@@ -233,7 +235,19 @@ export const routes: RouteDef[] = [
     path: "/:realm/authentication",
     component: AuthenticationSection,
     breadcrumb: (t) => t("authentication"),
-    access: "view-realm",
+    access: "view-authorization",
+  },
+  {
+    path: "/:realm/authentication/create",
+    component: CreateFlow,
+    breadcrumb: t("authentication:createFlow"),
+    access: "manage-authorization",
+  },
+  {
+    path: "/:realm/authentication/:id/:usedBy?/:buildIn?",
+    component: FlowDetails,
+    breadcrumb: t("authentication:flowDetails"),
+    access: "manage-authorization",
   },
   {
     path: "/:realm/identity-providers",
