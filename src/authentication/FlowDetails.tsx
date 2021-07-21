@@ -106,6 +106,26 @@ export const FlowDetails = () => {
     }
   };
 
+  const update = async (
+    execution: AuthenticationExecutionInfoRepresentation
+  ) => {
+    try {
+      await adminClient.authenticationManagement.updateExecution(
+        { flow: flow?.alias! },
+        execution
+      );
+      refresh();
+      addAlert(t("updateFlowSuccess"), AlertVariant.success);
+    } catch (error) {
+      addAlert(
+        t("updateFlowError", {
+          error: error.response?.data?.errorMessage || error,
+        }),
+        AlertVariant.danger
+      );
+    }
+  };
+
   return (
     <>
       <ViewHeader
@@ -200,6 +220,7 @@ export const FlowDetails = () => {
                         execution.isCollapsed = !execution.isCollapsed;
                         setExecutionList(executionList.clone());
                       }}
+                      onRowChange={update}
                     />
                   ))}
                 </>

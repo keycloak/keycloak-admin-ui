@@ -12,6 +12,7 @@ import {
   TextVariants,
 } from "@patternfly/react-core";
 
+import type AuthenticationExecutionInfoRepresentation from "keycloak-admin/lib/defs/authenticationExecutionInfoRepresentation";
 import type { ExpandableExecution } from "../FlowDetails";
 import { FlowTitle } from "./FlowTitle";
 import { FlowRequirementDropdown } from "./FlowRequirementDropdown";
@@ -21,9 +22,14 @@ import "./flow-row.css";
 type FlowRowProps = {
   execution: ExpandableExecution;
   onRowClick: (execution: ExpandableExecution) => void;
+  onRowChange: (execution: AuthenticationExecutionInfoRepresentation) => void;
 };
 
-export const FlowRow = ({ execution, onRowClick }: FlowRowProps) => {
+export const FlowRow = ({
+  execution,
+  onRowClick,
+  onRowChange,
+}: FlowRowProps) => {
   const { t } = useTranslation("authentication");
   const hasSubList =
     execution.executionList && execution.executionList.length > 0;
@@ -74,7 +80,10 @@ export const FlowRow = ({ execution, onRowClick }: FlowRowProps) => {
                 )}
               </DataListCell>,
               <DataListCell key={`${execution.id}-requirement`}>
-                <FlowRequirementDropdown flow={execution} />
+                <FlowRequirementDropdown
+                  flow={execution}
+                  onChange={onRowChange}
+                />
               </DataListCell>,
             ]}
           />
@@ -87,6 +96,7 @@ export const FlowRow = ({ execution, onRowClick }: FlowRowProps) => {
               key={execution.id}
               execution={execution}
               onRowClick={onRowClick}
+              onRowChange={onRowChange}
             />
           ))}
         </>
