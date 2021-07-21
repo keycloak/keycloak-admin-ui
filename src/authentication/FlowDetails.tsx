@@ -9,6 +9,7 @@ import {
   ToolbarContent,
   ToggleGroup,
   ToggleGroupItem,
+  AlertVariant,
 } from "@patternfly/react-core";
 import { CheckCircleIcon, TableIcon } from "@patternfly/react-icons";
 
@@ -22,6 +23,7 @@ import { FlowHeader } from "./components/FlowHeader";
 import { FlowRow } from "./components/FlowRow";
 import { ExecutionList, IndexChange, LevelChange } from "./execution-model";
 import { FlowDiagram } from "./components/FlowDiagram";
+import { useAlerts } from "../components/alert/Alerts";
 
 export type ExpandableExecution = AuthenticationExecutionInfoRepresentation & {
   executionList: ExpandableExecution[];
@@ -31,11 +33,14 @@ export type ExpandableExecution = AuthenticationExecutionInfoRepresentation & {
 export const FlowDetails = () => {
   const { t } = useTranslation("authentication");
   const adminClient = useAdminClient();
+  const { addAlert } = useAlerts();
   const { id, usedBy, buildIn } = useParams<{
     id: string;
     usedBy: string;
     buildIn: string;
   }>();
+  const [key, setKey] = useState(0);
+  const refresh = () => setKey(new Date().getTime());
 
   const [tableView, setTableView] = useState(true);
   const [flow, setFlow] = useState<AuthenticationFlowRepresentation>();
@@ -58,35 +63,46 @@ export const FlowDetails = () => {
       setFlow(flow);
       setExecutionList(new ExecutionList(executions));
     },
-    []
+    [key]
   );
 
   const executeChange = async (
     ex: AuthenticationFlowRepresentation,
     change: LevelChange | IndexChange
   ) => {
-    let id = ex.id!;
-    if ("parent" in change) {
-      await adminClient.authenticationManagement.delExecution({ id });
-      const result =
-        await adminClient.authenticationManagement.addExecutionToFlow({
-          flow: change.parent?.displayName! || flow?.alias!,
-          provider: ex.providerId!,
-        });
-      id = result.id!;
-    }
-    const c = change as IndexChange;
-    const times = c.newIndex - c.oldIndex;
-    for (let index = 0; index < Math.abs(times); index++) {
-      if (times > 0) {
-        await adminClient.authenticationManagement.lowerPriorityExecution({
-          id,
-        });
-      } else {
-        await adminClient.authenticationManagement.raisePriorityExecution({
-          id,
-        });
+    try {
+      let id = ex.id!;
+      if ("parent" in change) {
+        await adminClient.authenticationManagement.delExecution({ id });
+        const result =
+          await adminClient.authenticationManagement.addExecutionToFlow({
+            flow: change.parent?.displayName! || flow?.alias!,
+            provider: ex.providerId!,
+          });
+        id = result.id!;
       }
+      const c = change as IndexChange;
+      const times = c.newIndex - c.oldIndex;
+      for (let index = 0; index < Math.abs(times); index++) {
+        if (times > 0) {
+          await adminClient.authenticationManagement.lowerPriorityExecution({
+            id,
+          });
+        } else {
+          await adminClient.authenticationManagement.raisePriorityExecution({
+            id,
+          });
+        }
+      }
+      refresh();
+      addAlert(t("updateFlowSuccess"), AlertVariant.success);
+    } catch (error) {
+      addAlert(
+        t("updateFlowError", {
+          error: error.response?.data?.errorMessage || error,
+        }),
+        AlertVariant.danger
+      );
     }
   };
 

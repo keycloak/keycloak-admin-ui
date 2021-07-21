@@ -18,6 +18,8 @@ export default {
     deleteFlowSuccess: "Flow successfully deleted",
     deleteFlowError: "Could not delete flow: {{error}}",
     duplicateFlow: "Duplicate flow",
+    updateFlowSuccess: "Flow successfully updated",
+    updateFlowError: "Could not update flow: {{error}}",
     copyOf: "Copy of {{name}}",
     copyFlowSuccess: "Flow successfully duplicated",
     copyFlowError: "Could not duplicate flow: {{error}}",
